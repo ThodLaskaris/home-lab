@@ -18,7 +18,8 @@ node_modules/
 dist/
 .env.production
 .py
-
+.jpeg
+.css 
 # ==========================================
 # Python price-scanner-ai (Strictly Ignored)
 # ==========================================
