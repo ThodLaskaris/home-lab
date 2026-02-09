@@ -19,7 +19,6 @@ export async function autoScroll(page) {
                 let scrollHeight = document.body.scrollHeight;
                 window.scrollBy(0, distance);
                 totalHeight += distance;
-                // Scroll μέχρι το απόλυτο τέρμα
                 if (totalHeight >= scrollHeight) {
                     clearInterval(timer);
                     resolve();
@@ -64,7 +63,7 @@ export async function extractData(productLocator, config) {
 
 export async function scrapeUrl(context, url, config) {
     const page = await context.newPage();
-    let apiDataAccumulator = []; // Χρήση accumulator για να μην χάνουμε pagination
+    let apiDataAccumulator = [];
 
     page.on('response', async (response) => {
         const reqUrl = response.url();
@@ -77,7 +76,7 @@ export async function scrapeUrl(context, url, config) {
                         p: p.Price,
                         i: p.Image
                     }));
-                    apiDataAccumulator.push(...mapped); // Προσθήκη στο σύνολο
+                    apiDataAccumulator.push(...mapped);
                 }
             } catch (e) {}
         }
@@ -110,5 +109,31 @@ export async function scrapeUrl(context, url, config) {
         return [];
     } finally {
         await page.close();
+    }
+}
+
+export async function discoverTargets(page, config) {
+    const url = `${config.baseUrl}/katigories/`;
+    console.log(`Start at ${url} ..`);
+    
+    try {
+        await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+        await handleCookies(page, config);
+        await page.waitForLoadState('domcontentloaded');
+
+        const links = await page.evaluate(() => {
+            return Array.from(document.querySelectorAll('a'))
+                .map(a => a.href)
+                .filter(href => href.includes('sklavenitis.gr/'));
+        });
+
+        const pattern = /\/[a-z0-9-]+\/[a-z0-9-]+\/?$/; 
+        return [...new Set(links)].filter(link => 
+            pattern.test(link) && 
+            !['exypiretisi-pelaton', 'e-shop-info', 'log-in', '/katigories/', '/about/'].some(s => link.includes(s))
+        );
+    } catch (err) {
+        console.error("Discovery Fail:", err.message);
+        return [];
     }
 }

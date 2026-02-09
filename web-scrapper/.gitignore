@@ -4,6 +4,7 @@ master_susami.json
 *.msgpack
 *.json
 .env
+.txt
 
 # Sensitive Configs
 categories.js
