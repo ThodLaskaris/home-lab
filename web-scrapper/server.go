@@ -4,50 +4,66 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
 
+	pb "web-scrapper/proto"
+
+	"github.com/vmihailenco/msgpack/v5"
 	"google.golang.org/grpc"
-	pb "web-scrapper/proto" 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-type server struct {
+const (
+	port     = ":50051"
+	fileName = "scrapeMeDaddy.msgpack"
+	initialCap = 7500 
+)
+
+type Product struct {
+	Name  string  `msgpack:"name"`
+	Price float32 `msgpack:"price"`
+	Image string  `msgpack:"image"`
+}
+
+type dataServer struct {
 	pb.UnimplementedDataProcessorServer
 }
 
-func (s *server) StreamProducts(stream pb.DataProcessor_StreamProductsServer) error {
-	var count int32
-	log.Println("Stream started from Node.js...")
+func (s *dataServer) StreamProducts(stream pb.DataProcessor_StreamProductsServer) error {
+	products := make([]Product, 0, initialCap)
 
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
-			log.Printf("Stream finished. Total items processed: %d", count)
-			return stream.SendAndClose(&pb.SummaryResponse{
-				Message: "Master Data Synced Successfully",
-				Count:   count,
-				Success: true,
-			})
-		}
+		success := false
+		if len(products) > 0 {
+			b, _ := msgpack.Marshal(products)
+			if err := os.WriteFile(fileName, b, 0644); err == nil {
+			success = true
+        }
+		return stream.SendAndClose(&pb.SummaryResponse{Success: success})
+    }
+    return stream.SendAndClose(&pb.SummaryResponse{Success: success})
+ }
 		if err != nil {
-			log.Printf("Stream error: %v", err)
-			return err
+			return status.Error(codes.Aborted, "stream_error")
 		}
-		// Fuzzy match v001
-		log.Printf("Received: %s | Price: %.2f", req.GetName(), req.GetPrice())
-		count++
+
+		products = append(products, Product{
+			Name:  req.Name,
+			Price: req.Price,
+			Image: req.Image,
+		})
 	}
 }
 
+
 func main() {
-	lis, err := net.Listen("tcp", ":50051")
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-
+	lis, _ := net.Listen("tcp", port)
 	s := grpc.NewServer()
-	pb.RegisterDataProcessorServer(s, &server{})
-
-	log.Println("gRPC Server is running on..")
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+	pb.RegisterDataProcessorServer(s, &dataServer{})
+	
+	log.Println("Server is running..")
+	_ = s.Serve(lis)
 }

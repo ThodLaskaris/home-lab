@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v6.33.4
-// source: scraper.proto
+// source: proto/scraper.proto
 
 package proto
 
@@ -19,15 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DataProcessor_StreamProducts_FullMethodName = "/scraper.DataProcessor/StreamProducts"
+	DataProcessor_StreamProducts_FullMethodName   = "/scraper.DataProcessor/StreamProducts"
+	DataProcessor_MatchReceiptItem_FullMethodName = "/scraper.DataProcessor/MatchReceiptItem"
 )
 
 // DataProcessorClient is the client API for DataProcessor service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DataProcessorClient interface {
-	// Client-side streaming: Η Node στέλνει πολλά, η Go απαντάει μία φορά στο τέλος.
 	StreamProducts(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ProductRequest, SummaryResponse], error)
+	MatchReceiptItem(ctx context.Context, in *MatchRequest, opts ...grpc.CallOption) (*MatchResponse, error)
 }
 
 type dataProcessorClient struct {
@@ -51,12 +52,22 @@ func (c *dataProcessorClient) StreamProducts(ctx context.Context, opts ...grpc.C
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type DataProcessor_StreamProductsClient = grpc.ClientStreamingClient[ProductRequest, SummaryResponse]
 
+func (c *dataProcessorClient) MatchReceiptItem(ctx context.Context, in *MatchRequest, opts ...grpc.CallOption) (*MatchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MatchResponse)
+	err := c.cc.Invoke(ctx, DataProcessor_MatchReceiptItem_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DataProcessorServer is the server API for DataProcessor service.
 // All implementations must embed UnimplementedDataProcessorServer
 // for forward compatibility.
 type DataProcessorServer interface {
-	// Client-side streaming: Η Node στέλνει πολλά, η Go απαντάει μία φορά στο τέλος.
 	StreamProducts(grpc.ClientStreamingServer[ProductRequest, SummaryResponse]) error
+	MatchReceiptItem(context.Context, *MatchRequest) (*MatchResponse, error)
 	mustEmbedUnimplementedDataProcessorServer()
 }
 
@@ -69,6 +80,9 @@ type UnimplementedDataProcessorServer struct{}
 
 func (UnimplementedDataProcessorServer) StreamProducts(grpc.ClientStreamingServer[ProductRequest, SummaryResponse]) error {
 	return status.Error(codes.Unimplemented, "method StreamProducts not implemented")
+}
+func (UnimplementedDataProcessorServer) MatchReceiptItem(context.Context, *MatchRequest) (*MatchResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MatchReceiptItem not implemented")
 }
 func (UnimplementedDataProcessorServer) mustEmbedUnimplementedDataProcessorServer() {}
 func (UnimplementedDataProcessorServer) testEmbeddedByValue()                       {}
@@ -98,13 +112,36 @@ func _DataProcessor_StreamProducts_Handler(srv interface{}, stream grpc.ServerSt
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type DataProcessor_StreamProductsServer = grpc.ClientStreamingServer[ProductRequest, SummaryResponse]
 
+func _DataProcessor_MatchReceiptItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataProcessorServer).MatchReceiptItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DataProcessor_MatchReceiptItem_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataProcessorServer).MatchReceiptItem(ctx, req.(*MatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DataProcessor_ServiceDesc is the grpc.ServiceDesc for DataProcessor service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var DataProcessor_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "scraper.DataProcessor",
 	HandlerType: (*DataProcessorServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "MatchReceiptItem",
+			Handler:    _DataProcessor_MatchReceiptItem_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "StreamProducts",
@@ -112,5 +149,5 @@ var DataProcessor_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 	},
-	Metadata: "scraper.proto",
+	Metadata: "proto/scraper.proto",
 }
