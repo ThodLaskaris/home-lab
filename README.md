@@ -45,3 +45,27 @@ This project is an **accessibility tool** developed to solve real-world navigati
 - **RnD**: More than 36 hours to find the best combination of technologies and algorithms and adjust the pipeline to the needs of the project
 - Removed AI Scanning from the pipeline because of the bad data quality from the receipt
   (the problem still exists, but it's not a big deal if you don't use the AI)
+
+
+graph TD
+subgraph Scraping_Phase [Scraping Phase - Node.js & Playwright]
+Ahttps://eslspeaking.org/list-of-categories/ --> B{17 Concurrent Tabs}
+B --> C[DOM Extraction]
+B --> D[API Interception]
+end
+
+    subgraph Pipeline [Real-time Pipeline - gRPC]
+        C & D -->|Concurrent Stream| E[gRPC StreamProducts]
+    end
+
+    subgraph Go_Engine [Processing & Persistence - Go Engine]
+        E --> F[Go Matcher/Validator]
+        F --> G[MessagePack Serialization]
+        G --> H[(catalog.bin / .msgpack)]
+    end
+
+    subgraph Receipt_Workflow [Receipt Workflow]
+        I[ΑΑΔΕ Receipt URL] --> J[Node.js Extractor]
+        J --> K[Go Hybrid Matcher]
+        K --> L[Final Expense Report]
+    end
