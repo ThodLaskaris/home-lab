@@ -1,0 +1,33 @@
+syntax = "proto3";
+package proto;
+option go_package = "github.com/ThodLaskaris/go-engine/proto";
+
+service DataProcessor {
+  rpc StreamProducts (stream ProductRequest) returns (SummaryResponse);
+  rpc MatchReceiptItem (MatchRequest) returns (MatchResponse);
+}
+
+message ProductRequest {
+  string name = 1;
+  double price = 2;
+  string image = 3;
+  string category = 4;
+  string url = 5;
+}
+
+message SummaryResponse {
+  string message = 1;
+  int32 count = 2;
+  bool success = 3;
+}
+
+message MatchRequest {
+  string raw_text = 1;
+  string source_category = 2;
+}
+
+message MatchResponse {
+  string category = 1;
+  double score = 2;
+  string matched_with = 3;
+}

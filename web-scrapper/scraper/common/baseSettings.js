@@ -8,14 +8,17 @@ export const STORE_SELECTORS = {
 };
 
 export const ERROR_MESSAGE = {
-    productNotFound: 'Το προϊόν δεν βρέθηκε.',
-    priceNotFound: 'Η τιμή δεν βρέθηκε ή δεν είναι σε αναγνωρίσιμη μορφή.',
-    titleNotFound: 'Ο τίτλος δεν βρέθηκε.',
-    imageNotFound: 'Η εικόνα δεν βρέθηκε.',
-    serviceIsDown: 'Η υπηρεσία είναι προσωρινά μη διαθέσιμη. Παρακαλώ δοκιμάστε ξανά αργότερα.',
-    missingTarget: 'Δεν έχει οριστεί προϊόν για την αναζήτηση. Παρακαλώ προσθέστε ένα προϊόν και δοκιμάστε ξανά.',
-    missingBaseUrl: 'Η βασική διεύθυνση URL δεν έχει οριστεί. Παρακαλώ ορίστε μια έγκυρη βασική διεύθυνση URL και δοκιμάστε ξανά.',
-    noResults: 'Δεν βρέθηκαν προϊόντα στη διαδρομή.'
+    productNotFound: 'Product not found.',
+    priceNotFound: 'Price not found or invalid format.',
+    titleNotFound: 'Title not found.',
+    imageNotFound: 'Image not found.',
+    serviceIsDown: 'Service is temporarily unavailable. Please try again later.',
+    missingTarget: 'No search target defined. Please add a product and try again.',
+    missingBaseUrl: 'Base URL is not defined. Please set a valid base URL and try again.',
+    noResults: 'No products found in the specified path.',
+    noReceiptUrl: 'No receipt URL provided. Please provide a valid receipt URL and try again.',
+    noModeGiven: 'No mode specified. Please choose either "--catalog" or "--receipt" mode and try again.',
+    iFrameNotFound: 'iFrame source not found in the provided URL. Please check the URL and try again.'
 };
 
 export const BASE_URL = 'https://www.sklavenitis.gr';
@@ -32,7 +35,8 @@ export const SCRAPE_SETTINGS = {
     timeout: 60000,
     headless: true,
     maxResults: 1000,
-    concurrency: 17
+    concurrency: 15,
+    testUrl: 'HelloWorld'
 };
 
 export const config = {
