@@ -45,4 +45,4 @@ This project is an **accessibility tool** developed to solve real-world navigati
 - **RnD**: More than 36 hours to find the best combination of technologies and algorithms and adjust the pipeline to the needs of the project
 - Removed AI Scanning from the pipeline because of the bad data quality from the receipt
   (the problem still exists, but it's not a big deal if you don't use the AI)
-- 
+- Changed from Svelte/Astro to React ...cause...
