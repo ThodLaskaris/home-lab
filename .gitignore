@@ -1,54 +1,43 @@
 # ==========================================
 # Data & Scraping Results
 # ==========================================
-scrapeMeDaddy.msgpack
-master_susami.json
+# Binary datasets
 *.msgpack
+*.bin
+catalog.bin
+scrapeMeDaddy.msgpack
+
+# Scraping/Matching outputs
 *.json
-.env
-.jpg
-.py 
-.txt*
+!package.json
+!package-lock.json
+
+# Local assets
+*.jpg
+*.jpeg
+*.png
+!frontend/src/assets/*
 
 # ==========================================
 # Sensitive Configs & Dependencies
 # ==========================================
-categories.js
 node_modules/
+.env
+.env.*
+!.env.example
 .DS_Store
 dist/
-.env.production
-.py
-.jpeg
-.css 
-# ==========================================
-# Python price-scanner-ai (Strictly Ignored)
-# ==========================================
-__pycache__/
-*.py[cod]
-*$py.class
-venv/
-.venv/
-env/
-.python-version
+build/
+.svelte-kit/
+.astro/
 
 # ==========================================
-# Playwright / Browser artifacts
+# Playwright & Browser artifacts
 # ==========================================
 test-results/
 playwright-report/
 blob-report/
 playwright/.local-browsers
-
-# ==========================================
-# Logs & Debugging
-# ==========================================
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-*.log
-.eslintcache
 
 # ==========================================
 # IDE & System Specific
@@ -59,7 +48,10 @@ pnpm-debug.log*
 *.swo
 
 # ==========================================
-# Build Output & Generated Types (Astro/Svelte)
+# Logs & Debugging
 # ==========================================
-.astro/
-dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+/data/catalog.bin
+/go-engine/github.com/
