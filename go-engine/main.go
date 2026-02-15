@@ -27,7 +27,7 @@ func main() {
 
 	pb.RegisterDataProcessorServer(s, &services.DataProcessorServer{})
 
-	log.Printf("🚀 Go-Engine gRPC Server is running on :50051")
+	log.Printf("Go-Engine gRPC Server is running on :50051")
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
