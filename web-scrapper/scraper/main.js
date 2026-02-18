@@ -1,5 +1,12 @@
-import { config } from './config/config.js';
-import { pingService, validateConfig, handlerService } from './services/index.js';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+const { config } = await import('./config/config.js');
+const { pingService, validateConfig, handlerService } = await import('./services/index.js');
 
 /**
  * Main entry point for the scraper application. Validates configuration, checks service availability, and routes to the appropriate handler based on command-line arguments.

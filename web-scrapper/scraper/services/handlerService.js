@@ -26,7 +26,7 @@ export const handlerService = {
                 throw new Error(`BR- No items found for ${urlToUse}`);
             }
             console.table(items);
-            return await processReceiptMatches(items, grpcClient);
+            return await processReceiptMatches(items, grpcClient, config);
         } catch (error) {
             console.error(`Fail ${error.message}`);
             throw error;

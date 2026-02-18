@@ -1,4 +1,4 @@
-export async function processReceiptMatches(items, grpcClient) {
+export async function processReceiptMatches(items, grpcClient, config) {
     const uniqueItemsMap = new Map();
     items.forEach(item => {
         const existing = uniqueItemsMap.get(item.name);
@@ -27,7 +27,7 @@ export async function processReceiptMatches(items, grpcClient) {
             };
 
             grpcClient.MatchReceiptItem(request, (err, response) => {
-                if (err || !response || response.score < 0.35) {
+                if (err || !response || response.score < config.browserOptions.matchScoreThreshold) {
                     report.rejected.push({ name: item.name, reason: err ? err.message : 'Low Score' });
                     return resolve();
                 }

@@ -8,7 +8,7 @@ export async function pingService(config) {
     try {
         const response = await fetch(config.baseUrl, {
             method: 'HEAD',
-            signal: AbortSignal.timeout(5000)
+            signal: AbortSignal.timeout(config.browserOptions.servicePingTimeoutMs)
         });
 
         if (!response.ok) {

@@ -3,16 +3,18 @@ export async function handleCookies(page, config) {
     if (!cookieSelector) return;
     try {
         const btn = page.locator(cookieSelector).first();
-        if (await btn.isVisible({ timeout: 3000 })) await btn.click();
+        if (await btn.isVisible({ timeout: config.browserOptions.cookieCheckTimeoutMs })) await btn.click();
     } catch {
     }
 }
 
-export async function autoScroll(page) {
-    await page.evaluate(async () => {
+export async function autoScroll(page, config) {
+    const scrollDistance = config.browserOptions.scrollDistance;
+    const scrollInterval = config.browserOptions.scrollIntervalMs;
+
+    await page.evaluate(async ({ distance, interval }) => {
         await new Promise((resolve) => {
             let totalHeight = 0;
-            let distance = 400;
             let timer = setInterval(() => {
                 let scrollHeight = document.body.scrollHeight;
                 window.scrollBy(0, distance);
@@ -21,15 +23,15 @@ export async function autoScroll(page) {
                     clearInterval(timer);
                     resolve();
                 }
-            }, 800);
+            }, interval);
         });
-    });
+    }, { distance: scrollDistance, interval: scrollInterval });
 
     for (let i = 0; i < 4; i++) {
         await page.keyboard.press('End');
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(config.browserOptions.scrollEndKeyWaitMs);
     }
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(config.browserOptions.scrollFinalWaitMs);
 }
 
 export async function extractData(productLocator, config, url) {
@@ -75,7 +77,7 @@ export async function scrapeUrl(context, url, config) {
 
     page.on('response', async (response) => {
         const reqUrl = response.url();
-        if (reqUrl.includes('getproducts')) {
+        if (reqUrl.includes(config.filters.apiEndpointFilter)) {
             try {
                 const json = await response.json();
                 if (json.Products && Array.isArray(json.Products)) {
@@ -93,12 +95,13 @@ export async function scrapeUrl(context, url, config) {
         }
     });
 
-    await page.route('**/*.{png,jpg,jpeg,gif,webp,css,woff,pdf}', route => route.abort());
+    const blockedTypes = config.filters.blockedResourceTypes.join(',');
+    await page.route(`**/*.{${blockedTypes}}`, route => route.abort());
 
     try {
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-        await page.waitForTimeout(1000);
-        await autoScroll(page);
+        await page.goto(url, { waitUntil: 'networkidle', timeout: config.browserOptions.timeout });
+        await page.waitForTimeout(config.browserOptions.pageLoadWaitMs);
+        await autoScroll(page, config);
 
         if (apiDataAccumulator.length === 0) {
             const productLocators = page.locator(config.selectors.product);
@@ -120,23 +123,25 @@ export async function scrapeUrl(context, url, config) {
 }
 
 export async function discoverTargets(page, config) {
-    const url = `${config.baseUrl}/katigories/`;
+    const url = `${config.baseUrl}${config.filters.categoriesPath}`;
 
     try {
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+        await page.goto(url, { waitUntil: 'networkidle', timeout: config.browserOptions.timeout });
         await handleCookies(page, config);
         await page.waitForLoadState('domcontentloaded');
 
-        const links = await page.evaluate(() => {
+        const domainFilter = config.filters.domainFilter;
+        const links = await page.evaluate((filter) => {
             return Array.from(document.querySelectorAll('a'))
                 .map(a => a.href)
-                .filter(href => href.includes('sklavenitis.gr/'));
-        });
+                .filter(href => href.includes(filter));
+        }, domainFilter);
 
         const pattern = /\/[a-z0-9-]+\/[a-z0-9-]+\/?$/;
+        const excluded = config.filters.excludedUrlPatterns;
         return [...new Set(links)].filter(link =>
             pattern.test(link) &&
-            !['exypiretisi-pelaton', 'e-shop-info', 'log-in', '/katigories/', '/about/'].some(s => link.includes(s))
+            !excluded.some(s => link.includes(s))
         );
     } catch {
         return [];

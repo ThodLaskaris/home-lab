@@ -16,7 +16,7 @@ export async function runScraper(config) {
             return;
         }
 
-        const concurrency = config.browserOptions.concurrency || 17;
+        const concurrency = config.browserOptions.concurrency;
         const retryQueue = [];
 
         const stream = grpcClient.StreamProducts((err) => {
@@ -46,13 +46,14 @@ export async function runScraper(config) {
             }));
 
             toStore(res.flat());
-            if (i + concurrency < targets.length) await new Promise(r => setTimeout(r, 3000));
+            if (i + concurrency < targets.length) await new Promise(r => setTimeout(r, config.browserOptions.batchDelayMs));
         }
 
         if (retryQueue.length > 0) {
-            for (let j = 0; j < retryQueue.length; j += 5) {
+            const retryBatchSize = config.browserOptions.retryBatchSize;
+            for (let j = 0; j < retryQueue.length; j += retryBatchSize) {
                 const rRes = await Promise.all(
-                    retryQueue.slice(j, j + 5).map(u => scrapeUrl(context, u, config).catch(() => []))
+                    retryQueue.slice(j, j + retryBatchSize).map(u => scrapeUrl(context, u, config).catch(() => []))
                 );
                 toStore(rRes.flat());
             }
