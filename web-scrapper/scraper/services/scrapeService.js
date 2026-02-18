@@ -4,26 +4,27 @@ import { scrapeUrl, discoverTargets } from './automation.js';
 
 export async function runScraper(config) {
     const browser = await chromium.launch({ headless: config.browserOptions.headless });
-    const context = await browser.newContext({ userAgent: config.browserOptions.userAgent });
-
     try {
+        const context = await browser.newContext({ userAgent: config.browserOptions.userAgent });
+
         const discPage = await context.newPage();
         const targets = await discoverTargets(discPage, config);
         await discPage.close();
 
         if (!targets.length) {
-            await browser.close();
             return;
         }
 
         const concurrency = config.browserOptions.concurrency || 17;
         const retryQueue = [];
+        let streamError = null;
 
         const stream = grpcClient.StreamProducts((err) => {
-            if (err) throw new Error(`gRPC Stream Error: ${err.message}`);
+            if (err) streamError = err;
         });
 
         const toStore = (items) => {
+            if (streamError) return;
             items.forEach(i => stream.write({
                 name: i.n,
                 price: i.p,
@@ -34,6 +35,7 @@ export async function runScraper(config) {
         };
 
         for (let i = 0; i < targets.length; i += concurrency) {
+            if (streamError) break;
             const batch = targets.slice(i, i + concurrency);
 
             const res = await Promise.all(batch.map(async (u) => {
@@ -49,8 +51,9 @@ export async function runScraper(config) {
             if (i + concurrency < targets.length) await new Promise(r => setTimeout(r, 3000));
         }
 
-        if (retryQueue.length > 0) {
+        if (retryQueue.length > 0 && !streamError) {
             for (let j = 0; j < retryQueue.length; j += 5) {
+                if (streamError) break;
                 const rRes = await Promise.all(
                     retryQueue.slice(j, j + 5).map(u => scrapeUrl(context, u, config).catch(() => []))
                 );
@@ -59,6 +62,10 @@ export async function runScraper(config) {
         }
 
         stream.end();
+
+        if (streamError) {
+            throw new Error(`gRPC Stream Error: ${streamError.message}`);
+        }
     } finally {
         await browser.close();
     }
